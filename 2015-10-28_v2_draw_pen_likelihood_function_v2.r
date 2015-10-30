@@ -1,7 +1,20 @@
+setwd('/Users/user/Desktop/GitHub_jshinb/results')
+
 obtain.lrt.stat <- function(glm.null,glm1){
   ret = anova(glm.null,glm1,test="Chi")
   ret = ret$Deviance[2]
   ret
+}
+
+
+require(devtools)#to source from urls
+pmlr11_R_files = read.table('/Users/user/Desktop/GAW19_cleaned/scripts/pmlr11/pmlr11_R_filenames.out',sep=" ",
+                            stringsAsFactors = F)[,1]
+github.repos.name = 'https://raw.githubusercontent.com/jshinb/pmlr11/master/'
+
+pmlr11_R_files = paste(github.repos.name,pmlr11_R_files,sep="")
+for(i in 1:length(pmlr11_R_files)){
+  source_url(pmlr11_R_files[i])
 }
 
 ##
@@ -9,6 +22,8 @@ nreps = 1000
 seeds = floor(runif(n=nreps,min=-1000000,max=1000000))
 mybeta1s=seq(from=-20,to=20,length.out=1001)
 test.log1.mat <- test.log0.mat <- test.plog1.mat <- test.plog0.mat <- matrix(NA,nrow=length(mybeta1s),ncol=nreps)
+save(seeds,file='2015-10-29_seeds.RData')
+save(mybeta1s,file='2015-10-29_mybeta1s.RData')
 
 mybeta1=0
 maf=0.005; b0=-3; b1=mybeta1; nsample=2000
@@ -51,6 +66,10 @@ for(irep in 1:nreps){
   glm1.list[[irep]] <- my.glm
   test.log0.mat[,irep] <- test.log0
   test.log1.mat[,irep] <- test.log1
+  write.table(test.log0.mat,'2015-10-29_draw_likelihood_test.log0.mat',
+              quote=F,row.names=F,col.names=F)
+  write.table(test.log1.mat,'2015-10-29_draw_likelihood_test.log1.mat',
+              quote=F,row.names=F,col.names=F)
   
   # penalized log-likelihood
   pllhd.0 <- pllhd.A <- rep(NA,length(mybeta1s))
@@ -66,76 +85,16 @@ for(irep in 1:nreps){
   }
   test.plog0.mat[,irep] <- pllhd.0
   test.plog1.mat[,irep] <- pllhd.A
-  write.table('')
+  write.table(test.plog0.mat,'2015-10-29_draw_likelihood_test.plog0.mat',
+              quote=F,row.names=F,col.names=F)
+  write.table(test.plog0.mat,'2015-10-29_draw_likelihood_test.plog1.mat',
+              quote=F,row.names=F,col.names=F)
+
+  save(rao.pvals,file='2015-10-29_rao.pvals.RData')
+  save(plm.score,file='2015-10-29_plm.score.RData')
+  save(plm.betag,file='2015-10-29_plm.betag.RData')
+  save(cont.tables,file="2015-10-29_cont.tables.RData")
+  save(glm1.list,file="2015-10-29_glm1.list.RData")
+  save(glm0.list,file="2015-10-29_glm0.list.RData")
 }
 
-lrt.stats = NULL
-for(i in 1:irep){
-  lrt.stats = c(lrt.stats,obtain.lrt.stat(glm0.list[[i]],glm1.list[[i]]))
-}
-
-par(mfrow=c(1,2))
-hist(rao.pvals)
-lrt.pvals = pchisq(lrt.stats,df=1,lower.tail=F)
-plot(1:irep,-log10(lrt.pvals),pch=20,ylim=c(0,7),type="b")
-points(1:irep,-log10(rao.pvals),pch=1,col="red",type="b")
-abline(v=c(1:irep),lty=2,col="grey")
-abline(v=39,lty=1,col="grey")
-
-plot(-log10(rao.pvals),-log10(pchisq(lrt.stats,df=1,lower.tail=F)),pch=20)
-abline(0,1)
-
-sum(pchisq(lrt.stats,df=1,lower.tail=F) < 0.05)/length(pchisq(lrt.stats,df=1,lower.tail=F))
-sum(rao.pvals < 0.05)/length(rao.pvals)
-sum(lrt.pvals < 0.05)/length(rao.pvals)
-
-for(i in which(rao.pvals<0.05))
-  print(cont.tables[[i]])
-
-cont.n11.2 <- function(cont.table){
-  ret = cont.table[2,2] == 2
-  ret
-}
-
-cont.n11.3 <- function(cont.table){
-  ret = cont.table[2,2] == 3
-  ret
-}
-
-tem = sapply(cont.tables,cont.n11.2)
-print(sum(tem)/length(tem))
-
-tem3 = sapply(cont.tables,cont.n11.3)
-print(sum(tem3/length(tem3)))
-
-par(mfrow=c(1,2),ask=T)
-for(rep.id in 1:irep){#which(rao.pvals < 0.05)){
-  rep.id = 1
-  mytitle = paste("irep-",rep.id,"; ", "Rao Score test P-value = ", 
-                  round(anova(glm0.list[[rep.id]], glm1.list[[rep.id]], test="Rao")$P[2],4),sep="")
-  mytitlep = paste("irep-",rep.id,"; ", "Penalized Score test P-value = ", 
-                   round(plm.score[rep.id],4),sep="")
-  cat(mytitle)
-  print(cont.tables[[rep.id]])
-  print(sum(cont.tables[[rep.id]][,2]))
-  plot(mybeta1s,test.log0.mat[,rep.id],type="l",ylab="log-likelihood",main=mytitle)
-  abline(v=0,h=logLik(glm0.list[[rep.id]]),col="grey",lty=2)
-  lines(mybeta1s,test.log1.mat[,rep.id],lty=3,col="red");
-  abline(v=glm1.list[[rep.id]]$coef["z.x1TRUE"],h=logLik(glm1.list[[rep.id]]),col="pink",lty=2)
-  
-  plot(mybeta1s,test.plog0.mat[,rep.id],type="l",ylab="log-likelihood",main=mytitlep)
-  abline(v=0,h=logLik(glm0.list[[rep.id]]),col="grey",lty=2)
-  lines(mybeta1s,test.plog1.mat[,rep.id],lty=3,col="red");
-  abline(v=plm.betag[rep.id],h=logLik(glm1.list[[rep.id]]),col="pink",lty=2)
-}
-
-i=1
-ns = as.vector(cont.tables[[i]])
-for(i in 2:irep) ns = rbind(ns,as.vector(cont.tables[[i]]))
-which(tem & rao.pvals>=0.05)
-which(rao.pvals < 0.05)
-cont.tables[[4]]
-cont.tables[[8]]
-
-sum(rao.pvals < 0.01)/irep
-sum(rao.pvals < 0.05)/irep
