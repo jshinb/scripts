@@ -6,7 +6,8 @@ obtain.lrt.stat <- function(glm.null,glm1){
   ret
 }
 
-
+# Load devtools package to read in R files from github
+# taken from - http://christophergandrud.blogspot.ca/2012/07/sourcing-code-from-github.html
 require(devtools)#to source from urls
 pmlr11_R_files = read.table('/Users/user/Desktop/GAW19_cleaned/scripts/pmlr11/pmlr11_R_filenames.out',sep=" ",
                             stringsAsFactors = F)[,1]
