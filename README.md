@@ -1,6 +1,9 @@
 # scripts
 SBB - Desktop
 
+# Issues
+# deleted a file but it did not show.
+
 # initially!
 cd /Users/user/Desktop/GitHub_jshinb/scripts
 
