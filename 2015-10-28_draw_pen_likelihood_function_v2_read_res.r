@@ -22,8 +22,10 @@ for(rep.id in 1:length(cont.tables)){
                    round(plm.score[rep.id],4),sep="")
   
   plot(mybeta1s,test.log0.mat[,rep.id],type="l",ylab="log-likelihood",main=mytitle)
+  abline(v=0,h=logLik(glm0.list[[rep.id]]),col="grey",lty=2)
   lines(mybeta1s,test.log1.mat[,rep.id],lty=3,col="red");
   abline(v=glm1.list[[rep.id]]$coef["z.x1TRUE"],h=logLik(glm1.list[[rep.id]]),col="pink",lty=2)
+  
   plot(mybeta1s,test.plog0.mat[,rep.id],type="l",ylab="log-likelihood",main=mytitlep)
   abline(v=0,h=logLik(glm0.list[[rep.id]]),col="grey",lty=2)
   lines(mybeta1s,test.plog1.mat[,rep.id],lty=3,col="red");
