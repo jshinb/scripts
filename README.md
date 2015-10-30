@@ -11,7 +11,7 @@ git log
 
 # after create a repository on the github website! [run all three lines again??]
 git add *.*
-git commit -m "Change READNE.md"
+git commit -m "A new version of the script file created for drawing likelihood functions "
 git status
 git log
 
